@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚌 Система управления автобусами и городами</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .card { 
+            background: white; 
+            padding: 25px; 
+            margin: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #3498db;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .form-group { margin: 15px 0; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        input, select, button, textarea { 
+            padding: 12px 15px; 
+            margin: 5px 0; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 8px; 
+            font-size: 14px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        button { 
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: 600;
+            padding: 12px 25px;
+            margin: 5px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        button.delete { 
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        button.delete:hover {
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+        button.success { 
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+        button.warning { 
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+        button.secondary { 
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+        .message { 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            font-weight: 500;
+        }
+        .error { 
+            background: #ffeaea; 
+            color: #c0392b; 
+            border: 2px solid #fadbd8; 
+        }
+        .success { 
+            background: #eafaf1; 
+            color: #27ae60; 
+            border: 2px solid #d5f5e3; 
+        }
+        .info { 
+            background: #ebf5fb; 
+            color: #2980b9; 
+            border: 2px solid #d6eaf8; 
+        }
+        .bus-item, .city-item { 
+            border-left: 5px solid #3498db; 
+            margin: 12px 0;
+            transition: all 0.3s;
+        }
+        .bus-item:hover, .city-item:hover {
+            border-left-color: #e74c3c;
+        }
+        .city-item { 
+            background: #f8f9fa; 
+            margin: 8px 0; 
+            padding: 15px; 
+            border-radius: 8px;
+            border-left: 5px solid #27ae60;
+        }
+        .tabs { 
+            display: flex; 
+            margin: 0;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab { 
+            padding: 18px 30px; 
+            cursor: pointer; 
+            border: none;
+            background: none;
+            font-weight: 600;
+            color: #7f8c8d;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active { 
+            background: white; 
+            color: #2c3e50; 
+            border-bottom: 3px solid #3498db;
+        }
+        .tab:hover:not(.active) {
+            background: #e8f4fd;
+            color: #3498db;
+        }
+        .tab-content { 
+            display: none; 
+            padding: 0;
+        }
+        .tab-content.active { 
+            display: block; 
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .search-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px;
+        }
+        .entity-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #000;
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .tabs {
+                flex-direction: column;
+            }
+            .tab {
+                text-align: center;
+            }
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="header">
+            <h1>🚌 Система управления транспортом</h1>
+            <p>Управление автобусами, городами и маршрутами</p>
+        </div>
+
+        <!-- Сообщения -->
+        <div id="message"></div>
+
+        <!-- Статистика -->
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="busCount">0</div>
+                <div class="stat-label">Автобусов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="cityCount">0</div>
+                <div class="stat-label">Городов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="routeCount">0</div>
+                <div class="stat-label">Маршрутов</div>
+            </div>
+        </div>
+
+        <!-- Вкладки -->
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('dashboard')">📊 Дашборд</div>
+            <div class="tab" onclick="showTab('buses')">🚌 Автобусы</div>
+            <div class="tab" onclick="showTab('cities')">🏙️ Города</div>
+            <div class="tab" onclick="showTab('routes')">🗺️ Маршруты</div>
+        </div>
+
+        <!-- Дашборд -->
+        <div id="dashboard" class="tab-content active">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>🚌 Быстрое управление автобусами</h3>
+                    <div class="form-group">
+                        <input type="text" id="quickBusNumber" placeholder="Номер автобуса">
+                        <input type="number" id="quickBusPrice" placeholder="Стоимость проезда">
+                        <button onclick="quickAddBus()" class="success">Быстро добавить автобус</button>
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="showTab('buses')">Управление автобусами</button>
+                        <button onclick="loadAllBuses()">Обновить список</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🏙️ Быстрое управление городами</h3>
+                    <div class="form-group">
+                        <input type="text" id="quickCityName" placeholder="Название города">
+                        <input type="number" id="quickCityLat" placeholder="Широта" step="0.000001">
+                        <input type="number" id="quickCityLng" placeholder="Долгота" step="0.000001">
+                        <button onclick="quickAddCity()" class="success">Быстро добавить город</button>
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="showTab('cities')">Управление городами</button>
+                        <button onclick="loadAllCities()">Обновить список</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📈 Последние действия</h3>
+                <div id="recentActivity">
+                    <p>Здесь будет отображаться история действий...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка автобусов -->
+        <div id="buses" class="tab-content">
+            <div class="grid-2">
+                <!-- Форма добавления автобуса -->
+                <div class="card">
+                    <h3>➕ Добавить автобус</h3>
+                    <form id="busForm">
+                        <div class="form-group">
+                            <label for="number">Номер автобуса:</label>
+                            <input type="text" id="number" placeholder="Например: А123" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Стоимость проезда (руб.):</label>
+                            <input type="number" id="price" placeholder="Например: 50" required min="0">
+                        </div>
+                   <!--     <div class="form-group">
+                            <label for="initialCities">Начальный маршрут (ID городов через запятую):</label>
+                            <input type="text" id="initialCities" placeholder="Например: 1,2,3">
+                            <small>Опционально: укажите ID городов для начального маршрута</small>
+                        </div>
+                    -->
+                        <button type="submit" class="success">✅ Добавить автобус</button>
+                    </form>
+                </div>
+
+                <!-- Поиск и фильтрация -->
+                <div class="card">
+                    <h3>🔍 Поиск автобусов</h3>
+                    <div class="form-group">
+                        <label for="cityIdFilter">Фильтр по городу (ID):</label>
+                        <input type="number" id="cityIdFilter" placeholder="Введите ID города">
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="loadBuses()">🔄 Показать все автобусы</button>
+                        <button onclick="loadBusesByCity()">🏙️ Показать по городу</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список автобусов -->
+            <div class="card">
+                <h3>📋 Список автобусов</h3>
+                <div id="busList" class="entity-list">
+                    <p>Загрузка автобусов...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка городов -->
+        <div id="cities" class="tab-content">
+            <div class="grid-2">
+                <!-- Форма добавления города -->
+                <div class="card">
+                    <h3>➕ Добавить город</h3>
+                    <form id="cityForm">
+                        <div class="form-group">
+                            <label for="cityName">Название города:</label>
+                            <input type="text" id="cityName" placeholder="Например: Москва" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="latitude">Широта:</label>
+                            <input type="number" id="latitude" placeholder="55.7558" step="0.000001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="longitude">Долгота:</label>
+                            <input type="number" id="longitude" placeholder="37.6173" step="0.000001" required>
+                        </div>
+                        <button type="submit" class="success">✅ Добавить город</button>
+                    </form>
+                </div>
+
+                <!-- Поиск городов -->
+                <div class="card">
+                    <h3>🔍 Поиск городов</h3>
+                    <div class="form-group">
+                        <label for="busIdFilter">Фильтр по автобусу (ID):</label>
+                        <input type="number" id="busIdFilter" placeholder="Введите ID автобуса">
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="loadCities()">🔄 Показать все города</button>
+                        <button onclick="loadCitiesByBus()">🚌 Показать по автобусу</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список городов -->
+            <div class="card">
+                <h3>📋 Список городов</h3>
+                <div id="cityList" class="entity-list">
+                    <p>Загрузка городов...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка маршрутов -->
+        <div id="routes" class="tab-content">
+            <div class="grid-3">
+                <!-- Управление маршрутом -->
+                <div class="card">
+                    <h3>🎯 Выбор автобуса</h3>
+                    <div class="form-group">
+                        <label for="busIdRoute">ID автобуса:</label>
+                        <input type="number" id="busIdRoute" placeholder="Введите ID автобуса">
+                        <button onclick="loadRoute()">🔄 Показать маршрут</button>
+                    </div>
+                    <div id="currentBusInfo">
+                        <p>Выберите автобус для управления маршрутом</p>
+                    </div>
+                </div>
+
+                <!-- Добавление городов -->
+                <div class="card">
+                    <h3>➕ Добавить города в маршрут</h3>
+                    <div class="form-group">
+                        <label for="cityIds">ID городов через запятую:</label>
+                        <input type="text" id="cityIds" placeholder="Например: 1,2,3">
+                        <small>Введите ID городов, которые нужно добавить в маршрут</small>
+                    </div>
+                    <button onclick="addRoute()" class="success">✅ Добавить в маршрут</button>
+                </div>
+
+                <!-- Удаление городов -->
+                <div class="card">
+                    <h3>🗑️ Удалить города из маршрута</h3>
+                    <div class="form-group">
+                        <label for="cityIdsToRemove">ID городов через запятую:</label>
+                        <input type="text" id="cityIdsToRemove" placeholder="Например: 2,3">
+                        <small>Введите ID городов, которые нужно удалить из маршрута</small>
+                    </div>
+                    <button onclick="deleteRoute()" class="delete">❌ Удалить из маршрута</button>
+                </div>
+            </div>
+
+            <!-- Маршрут автобуса -->
+            <div class="card">
+                <h3>🗺️ Текущий маршрут</h3>
+                <div id="routeInfo">
+                    <p>Выберите автобус для просмотра маршрута</p>
+                </div>
+            </div>
+
+            <!-- Быстрые действия -->
+            <div class="card">
+                <h3>⚡ Быстрые действия</h3>
+                <div class="action-buttons">
+                    <button onclick="clearAllRoutes()" class="warning">🧹 Очистить весь маршрут</button>
+                    <button onclick="loadPopularRoutes()" class="info">📊 Популярные маршруты</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования автобуса -->
+    <div id="editBusModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditBusModal()">&times;</span>
+            <h2>✏️ Редактировать автобус</h2>
+            <form id="editBusForm">
+                <input type="hidden" id="editBusId">
+                <div class="form-group">
+                    <label for="editBusNumber">Номер автобуса:</label>
+                    <input type="text" id="editBusNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="editBusPrice">Стоимость проезда (руб.):</label>
+                    <input type="number" id="editBusPrice" required min="0">
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="success">💾 Сохранить изменения</button>
+                    <button type="button" onclick="closeEditBusModal()" class="secondary">❌ Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования города -->
+    <div id="editCityModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditCityModal()">&times;</span>
+            <h2>✏️ Редактировать город</h2>
+            <form id="editCityForm">
+                <input type="hidden" id="editCityId">
+                <div class="form-group">
+                    <label for="editCityName">Название города:</label>
+                    <input type="text" id="editCityName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCityLatitude">Широта:</label>
+                    <input type="number" id="editCityLatitude" step="0.000001" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCityLongitude">Долгота:</label>
+                    <input type="number" id="editCityLongitude" step="0.000001" required>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="success">💾 Сохранить изменения</button>
+                    <button type="button" onclick="closeEditCityModal()" class="secondary">❌ Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        const BUS_API = '/bus';
+        const CITY_API = '/city';
+        
+        // Утилиты для работы с API
+        class TransportAPI {
+            static async request(url, options = {}) {
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        },
+                        ...options
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${errorText}`);
+                    }
+                    
+                    if (response.status === 204) return null;
+                    return await response.json();
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            }
+
+            static get(url) { return this.request(url); }
+            static post(url, data) { return this.request(url, { method: 'POST', body: JSON.stringify(data) }); }
+            static put(url, data) { return this.request(url, { method: 'PUT', body: JSON.stringify(data) }); }
+            static delete(url) { return this.request(url, { method: 'DELETE' }); }
+        }
+
+        // UI управление
+        class TransportManager {
+            static showMessage(text, type = 'error') {
+                const messageDiv = document.getElementById('message');
+                messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+                setTimeout(() => messageDiv.innerHTML = '', 5000);
+            }
+
+            static logActivity(message) {
+                const activityDiv = document.getElementById('recentActivity');
+                const timestamp = new Date().toLocaleTimeString();
+                activityDiv.innerHTML = `<p>🕒 ${timestamp}: ${message}</p>` + activityDiv.innerHTML;
+            }
+
+            // Статистика
+            static async updateStats() {
+                try {
+                    const buses = await TransportAPI.get(BUS_API);
+                    const cities = await TransportAPI.get(CITY_API);
+                    
+                    document.getElementById('busCount').textContent = buses?.length || 0;
+                    document.getElementById('cityCount').textContent = cities?.length || 0;
+                    
+                    // Подсчет маршрутов (автобусы с городами)
+                    let routeCount = 0;
+                    if (buses) {
+                        for (const bus of buses) {
+                            const route = await TransportAPI.get(`${BUS_API}/route/${bus.id}`).catch(() => []);
+                            if (route && route.length > 0) routeCount++;
+                        }
+                    }
+                    document.getElementById('routeCount').textContent = routeCount;
+                } catch (error) {
+                    console.error('Ошибка обновления статистики:', error);
+                }
+            }
+ 
+            // Автобусы
+            static async loadBuses(cityId = null) {
+                try {
+                    let url = BUS_API;
+                    if (cityId) url += `?CityId=${cityId}`;
+                    
+                    const buses = await TransportAPI.get(url);
+                    this.renderBuses(buses);
+                    this.logActivity(`Загружены автобусы${cityId ? ' для города ' + cityId : ''}`);
+                } catch (error) {
+                    this.showMessage('Ошибка загрузки автобусов: ' + error.message);
+                }
+            }
+
+            static renderBuses(buses) {
+                const busList = document.getElementById('busList');
+                
+                if (!buses || buses.length === 0) {
+                    busList.innerHTML = '<div class="info message">🚫 Автобусы не найдены</div>';
+                    return;
+                }
+
+                busList.innerHTML = buses.map(bus => `
+                    <div class="bus-item card">
+                        <h4>🚌 Автобус ${bus.number}</h4>
+                        <p><strong>ID:</strong> ${bus.id}</p>
+                        <p><strong>💵 Стоимость:</strong> ${bus.price} руб.</p>
+                        <div class="action-buttons">
+                            <button onclick="TransportManager.viewBus(${bus.id})">👁️ Подробнее</button>
+                            <button onclick="TransportManager.editBus(${bus.id})">✏️ Редактировать</button>
+                            <button onclick="TransportManager.selectBusForRoute(${bus.id})">🗺️ Выбрать для маршрута</button>
+                            <button onclick="TransportManager.deleteBus(${bus.id})" class="delete">❌ Удалить</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            static async addBus(event) {
+                event.preventDefault();
+                
+                const number = document.getElementById('number').value.trim();
+                const price = document.getElementById('price').value;
+        //        const initialCities = document.getElementById('initialCities').value;
+
+                if (!number || !price) {
+                    this.showMessage('Заполните номер и стоимость автобуса');
+                    return;
+                }
+
+                try {
+                    const busData = { 
+                        number, 
+                        price: parseInt(price)
+                    };
+
+                    // Если указаны города для начального маршрута
+               //     if (initialCities) {
+               //         const cityIds = initialCities.split(',')
+               //             .map(id => id.trim())
+               //             .filter(id => id !== '')
+               //             .map(id => parseInt(id));
+               //         
+               //         if (cityIds.length > 0) {
+               //             busData.cities = cityIds;
+               //         }
+               //     }
+
+                    const busId = await TransportAPI.post(BUS_API, busData);
+                    this.showMessage(`✅ Автобус "${number}" успешно добавлен! ID: ${busId}`, 'success');
+                    this.logActivity(`Добавлен автобус: ${number}`);
+                    document.getElementById('busForm').reset();
+                    await this.loadBuses();
+                    await this.updateStats();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка добавления автобуса: ' + error.message);
+                }
+            }
+
+            static async editBus(id) {
+                try {
+                    const bus = await TransportAPI.get(`${BUS_API}/${id}`);
+                    
+                    // Заполняем форму редактирования
+                    document.getElementById('editBusId').value = bus.id;
+                    document.getElementById('editBusNumber').value = bus.number;
+                    document.getElementById('editBusPrice').value = bus.price;
+                    
+                    // Показываем модальное окно
+                    document.getElementById('editBusModal').style.display = 'block';
+                } catch (error) {
+                    this.showMessage('❌ Ошибка загрузки данных автобуса: ' + error.message);
+                }
+            }
+
+            static async updateBus(event) {
+                event.preventDefault();
+                
+                const id = document.getElementById('editBusId').value;
+                const number = document.getElementById('editBusNumber').value.trim();
+                const price = document.getElementById('editBusPrice').value;
+
+                if (!number || !price) {
+                    this.showMessage('Заполните все поля');
+                    return;
+                }
+
+                try {
+                    await TransportAPI.put(`${BUS_API}/${id}`, { 
+                        number, 
+                        price: parseInt(price) 
+                    });
+                    
+                    this.showMessage(`✅ Автобус "${number}" успешно обновлен!`, 'success');
+                    this.logActivity(`Обновлен автобус: ${number}`);
+                    this.closeEditBusModal();
+                    await this.loadBuses();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка обновления автобуса: ' + error.message);
+                }
+            }
+
+            static async deleteBus(id) {
+                if (!confirm('❌ Вы уверены, что хотите удалить этот автобус?')) return;
+
+                try {
+                    await TransportAPI.delete(`${BUS_API}/${id}`);
+                    this.showMessage('✅ Автобус успешно удален!', 'success');
+                    this.logActivity(`Удален автобус ID: ${id}`);
+                    await this.loadBuses();
+                    await this.updateStats();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка удаления автобуса: ' + error.message);
+                }
+            }
+
+            // Города
+            static async loadCities(busId = null) {
+                try {
+                    let url = CITY_API;
+                    if (busId) url += `?busId=${busId}`;
+                    
+                    const cities = await TransportAPI.get(url);
+                    this.renderCities(cities);
+                    this.logActivity(`Загружены города${busId ? ' для автобуса ' + busId : ''}`);
+                } catch (error) {
+                    this.showMessage('❌ Ошибка загрузки городов: ' + error.message);
+                }
+            }
+
+            static renderCities(cities) {
+                const cityList = document.getElementById('cityList');
+                
+                if (!cities || cities.length === 0) {
+                    cityList.innerHTML = '<div class="info message">🏙️ Города не найдены</div>';
+                    return;
+                }
+
+                cityList.innerHTML = cities.map(city => `
+                    <div class="city-item">
+                        <h4>🏙️ ${city.name}</h4>
+                        <p><strong>ID:</strong> ${city.id}</p>
+                        <p><strong>📍 Координаты:</strong> ${city.latitude?.toFixed(6)}, ${city.longitude?.toFixed(6)}</p>
+                        <div class="action-buttons">
+                            <button onclick="TransportManager.viewCity(${city.id})">👁️ Подробнее</button>
+                            <button onclick="TransportManager.editCity(${city.id})">✏️ Редактировать</button>
+                            <button onclick="TransportManager.deleteCity(${city.id})" class="delete">❌ Удалить</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            static async addCity(event) {
+                event.preventDefault();
+                
+                const name = document.getElementById('cityName').value.trim();
+                const latitude = document.getElementById('latitude').value;
+                const longitude = document.getElementById('longitude').value;
+
+                if (!name || !latitude || !longitude) {
+                    this.showMessage('Заполните все поля');
+                    return;
+                }
+
+                try {
+                    const cityId = await TransportAPI.post(CITY_API, { 
+                        name, 
+                        latitude: parseFloat(latitude), 
+                        longitude: parseFloat(longitude) 
+                    });
+                    this.showMessage(`✅ Город "${name}" успешно добавлен! ID: ${cityId}`, 'success');
+                    this.logActivity(`Добавлен город: ${name}`);
+                    document.getElementById('cityForm').reset();
+                    await this.loadCities();
+                    await this.updateStats();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка добавления города: ' + error.message);
+                }
+            }
+
+            static async editCity(id) {
+                try {
+                    const city = await TransportAPI.get(`${CITY_API}/${id}`);
+                    
+                    // Заполняем форму редактирования
+                    document.getElementById('editCityId').value = city.id;
+                    document.getElementById('editCityName').value = city.name;
+                    document.getElementById('editCityLatitude').value = city.latitude;
+                    document.getElementById('editCityLongitude').value = city.longitude;
+                    
+                    // Показываем модальное окно
+                    document.getElementById('editCityModal').style.display = 'block';
+                } catch (error) {
+                    this.showMessage('❌ Ошибка загрузки данных города: ' + error.message);
+                }
+            }
+
+            static async updateCity(event) {
+                event.preventDefault();
+                
+                const id = document.getElementById('editCityId').value;
+                const name = document.getElementById('editCityName').value.trim();
+                const latitude = document.getElementById('editCityLatitude').value;
+                const longitude = document.getElementById('editCityLongitude').value;
+
+                if (!name || !latitude || !longitude) {
+                    this.showMessage('Заполните все поля');
+                    return;
+                }
+
+                try {
+                    await TransportAPI.put(`${CITY_API}/${id}`, { 
+                        name, 
+                        latitude: parseFloat(latitude), 
+                        longitude: parseFloat(longitude) 
+                    });
+                    
+                    this.showMessage(`✅ Город "${name}" успешно обновлен!`, 'success');
+                    this.logActivity(`Обновлен город: ${name}`);
+                    this.closeEditCityModal();
+                    await this.loadCities();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка обновления города: ' + error.message);
+                }
+            }
+
+            static async deleteCity(id) {
+                if (!confirm('❌ Вы уверены, что хотите удалить этот город?')) return;
+
+                try {
+                    await TransportAPI.delete(`${CITY_API}/${id}`);
+                    this.showMessage('✅ Город успешно удален!', 'success');
+                    this.logActivity(`Удален город ID: ${id}`);
+                    await this.loadCities();
+                    await this.updateStats();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка удаления города: ' + error.message);
+                }
+            }
+
+            // Маршруты
+            static async loadRoute() {
+                const busId = document.getElementById('busIdRoute').value;
+                if (!busId) {
+                    this.showMessage('Введите ID автобуса');
+                    return;
+                }
+
+                try {
+                    const route = await TransportAPI.get(`${BUS_API}/route/${busId}`);
+                    this.renderRoute(route, busId);
+                    this.logActivity(`Загружен маршрут для автобуса ${busId}`);
+                } catch (error) {
+                    this.showMessage('❌ Ошибка загрузки маршрута: ' + error.message);
+                }
+            }
+
+            static renderRoute(cities, busId) {
+                const routeInfo = document.getElementById('routeInfo');
+                
+                if (!cities || cities.length === 0) {
+                    routeInfo.innerHTML = '<div class="info message">🚫 У автобуса нет маршрута</div>';
+                    return;
+                }
+
+                routeInfo.innerHTML = `
+                    <h4>🗺️ Маршрут автобуса ${busId} (${cities.length} городов)</h4>
+                    <div class="entity-list">
+                        ${cities.map((city, index) => `
+                            <div class="city-item">
+                                <h5>${index + 1}. ${city.name}</h5>
+                                <p><strong>ID:</strong> ${city.id}</p>
+                                <p><strong>📍 Координаты:</strong> ${city.latitude?.toFixed(6)}, ${city.longitude?.toFixed(6)}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            static async addRoute() {
+                const busId = document.getElementById('busIdRoute').value;
+                const cityIdsInput = document.getElementById('cityIds').value;
+
+                if (!busId || !cityIdsInput) {
+                    this.showMessage('Заполните ID автобуса и список городов');
+                    return;
+                }
+
+                try {
+                    const cityIds = cityIdsInput.split(',')
+                        .map(id => id.trim())
+                        .filter(id => id !== '')
+                        .map(id => ({ id: parseInt(id) }));
+
+                    if (cityIds.length === 0) {
+                        this.showMessage('Введите корректные ID городов');
+                        return;
+                    }
+
+                    await TransportAPI.put(`${BUS_API}/addRoute/${busId}`, cityIds);
+                    this.showMessage('✅ Города успешно добавлены в маршрут!', 'success');
+                    this.logActivity(`Добавлены города в маршрут автобуса ${busId}`);
+                    document.getElementById('cityIds').value = '';
+                    await this.loadRoute();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка добавления маршрута: ' + error.message);
+                }
+            }
+
+            static async deleteRoute() {
+                const busId = document.getElementById('busIdRoute').value;
+                const cityIdsInput = document.getElementById('cityIdsToRemove').value;
+
+                if (!busId || !cityIdsInput) {
+                    this.showMessage('Заполните ID автобуса и список городов');
+                    return;
+                }
+
+                if (!confirm('❌ Удалить выбранные города из маршрута?')) return;
+
+                try {
+                    const cityIds = cityIdsInput.split(',')
+                        .map(id => id.trim())
+                        .filter(id => id !== '')
+                        .map(id => ({ id: parseInt(id) }));
+
+                    if (cityIds.length === 0) {
+                        this.showMessage('Введите корректные ID городов');
+                        return;
+                    }
+
+                    await TransportAPI.put(`${BUS_API}/delRoute/${busId}`, cityIds);
+                    this.showMessage('✅ Города удалены из маршрута!', 'success');
+                    this.logActivity(`Удалены города из маршрута автобуса ${busId}`);
+                    document.getElementById('cityIdsToRemove').value = '';
+                    await this.loadRoute();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка удаления городов из маршрута: ' + error.message);
+                }
+            }
+
+            static async clearAllRoutes() {
+                const busId = document.getElementById('busIdRoute').value;
+                
+                if (!busId) {
+                    this.showMessage('Введите ID автобуса');
+                    return;
+                }
+            
+                if (!confirm('🧹 Очистить весь маршрут автобуса? Это удалит все города из маршрута.')) return;
+            
+                try {
+                    const currentRoute = await TransportAPI.get(`${BUS_API}/route/${busId}`);
+                    
+                    if (currentRoute.length === 0) {
+                        this.showMessage('Маршрут и так пустой', 'success');
+                        return;
+                    }
+            
+                    const cityIds = currentRoute.map(city => ({ id: city.id }));
+                    await TransportAPI.put(`${BUS_API}/delRoute/${busId}`, cityIds);
+                    this.showMessage('✅ Весь маршрут очищен!', 'success');
+                    this.logActivity(`Очищен маршрут автобуса ${busId}`);
+                    await this.loadRoute();
+                    await this.updateStats();
+                } catch (error) {
+                    this.showMessage('❌ Ошибка очистки маршрута: ' + error.message);
+                }
+            }
+
+            // Вспомогательные методы
+            static async viewBus(id) {
+                try {
+                    const bus = await TransportAPI.get(`${BUS_API}/${id}`);
+                    const route = await TransportAPI.get(`${BUS_API}/route/${id}`).catch(() => []);
+                    
+                    let routeInfo = 'Нет маршрута';
+                    if (route && route.length > 0) {
+                        routeInfo = route.map(city => city.name).join(' → ');
+                    }
+                    
+                    alert(`🚌 Детали автобуса:\n\nНомер: ${bus.number}\n💵 Цена: ${bus.price} руб.\n🆔 ID: ${bus.id}\n🗺️ Маршрут: ${routeInfo}`);
+                } catch (error) {
+                    this.showMessage('❌ Ошибка загрузки данных автобуса: ' + error.message);
+                }
+            }
+
+            static async viewCity(id) {
+                try {
+                    const city = await TransportAPI.get(`${CITY_API}/${id}`);
+                    alert(`🏙️ Детали города:\n\nНазвание: ${city.name}\n📍 Широта: ${city.latitude}\n📍 Долгота: ${city.longitude}\n🆔 ID: ${city.id}`);
+                } catch (error) {
+                    this.showMessage('❌ Ошибка загрузки данных города: ' + error.message);
+                }
+            }
+
+            static async selectBusForRoute(busId) {
+                document.getElementById('busIdRoute').value = busId;
+                showTab('routes');
+                await this.loadRoute();
+            }
+
+            // Модальные окна
+            static closeEditBusModal() {
+                document.getElementById('editBusModal').style.display = 'none';
+                document.getElementById('editBusForm').reset();
+            }
+
+            static closeEditCityModal() {
+                document.getElementById('editCityModal').style.display = 'none';
+                document.getElementById('editCityForm').reset();
+            }
+        }
+
+        // Глобальные функции
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Автоматическая загрузка данных при переключении вкладок
+            if (tabName === 'buses') TransportManager.loadBuses();
+            if (tabName === 'cities') TransportManager.loadCities();
+            if (tabName === 'dashboard') TransportManager.updateStats();
+        }
+
+        function loadBuses() { TransportManager.loadBuses(); }
+        function loadBusesByCity() { 
+            const cityId = document.getElementById('cityIdFilter').value;
+            TransportManager.loadBuses(cityId || null);
+        }
+        function loadCities() { TransportManager.loadCities(); }
+        function loadCitiesByBus() { 
+            const busId = document.getElementById('busIdFilter').value;
+            TransportManager.loadCities(busId || null);
+        }
+        function loadRoute() { TransportManager.loadRoute(); }
+        function addRoute() { TransportManager.addRoute(); }
+        function deleteRoute() { TransportManager.deleteRoute(); }
+        function clearAllRoutes() { TransportManager.clearAllRoutes(); }
+        function loadAllBuses() { TransportManager.loadBuses(); TransportManager.updateStats(); }
+        function loadAllCities() { TransportManager.loadCities(); TransportManager.updateStats(); }
+        function closeEditBusModal() { TransportManager.closeEditBusModal(); }
+        function closeEditCityModal() { TransportManager.closeEditCityModal(); }
+
+        // Быстрые действия
+        function quickAddBus() {
+            const number = document.getElementById('quickBusNumber').value;
+            const price = document.getElementById('quickBusPrice').value;
+            if (number && price) {
+                TransportAPI.post(BUS_API, { number, price: parseInt(price) })
+                    .then(() => {
+                        TransportManager.showMessage('✅ Автобус быстро добавлен!', 'success');
+                        TransportManager.updateStats();
+                        document.getElementById('quickBusNumber').value = '';
+                        document.getElementById('quickBusPrice').value = '';
+                    })
+                    .catch(error => TransportManager.showMessage('❌ Ошибка: ' + error.message));
+            }
+        }
+
+        function quickAddCity() {
+            const name = document.getElementById('quickCityName').value;
+            const lat = document.getElementById('quickCityLat').value;
+            const lng = document.getElementById('quickCityLng').value;
+            if (name && lat && lng) {
+                TransportAPI.post(CITY_API, { name, latitude: parseFloat(lat), longitude: parseFloat(lng) })
+                    .then(() => {
+                        TransportManager.showMessage('✅ Город быстро добавлен!', 'success');
+                        TransportManager.updateStats();
+                        document.getElementById('quickCityName').value = '';
+                        document.getElementById('quickCityLat').value = '';
+                        document.getElementById('quickCityLng').value = '';
+                    })
+                    .catch(error => TransportManager.showMessage('❌ Ошибка: ' + error.message));
+            }
+        }
+
+        function loadPopularRoutes() {
+            TransportManager.showMessage('📊 Функция популярных маршрутов в разработке', 'info');
+        }
+
+        // Закрытие модальных окон при клике вне их
+        window.onclick = function(event) {
+            const editBusModal = document.getElementById('editBusModal');
+            const editCityModal = document.getElementById('editCityModal');
+            
+            if (event.target === editBusModal) {
+                TransportManager.closeEditBusModal();
+            }
+            if (event.target === editCityModal) {
+                TransportManager.closeEditCityModal();
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Назначение обработчиков форм
+            document.getElementById('busForm').addEventListener('submit', (e) => TransportManager.addBus(e));
+            document.getElementById('cityForm').addEventListener('submit', (e) => TransportManager.addCity(e));
+            document.getElementById('editBusForm').addEventListener('submit', (e) => TransportManager.updateBus(e));
+            document.getElementById('editCityForm').addEventListener('submit', (e) => TransportManager.updateCity(e));
+            
+            // Первоначальная загрузка
+            TransportManager.loadBuses();
+            TransportManager.loadCities();
+            TransportManager.updateStats();
+            
+            TransportManager.showMessage('🚀 Система управления транспортом запущена!', 'info');
+        });
+    </script>
+</body>
+</html>
