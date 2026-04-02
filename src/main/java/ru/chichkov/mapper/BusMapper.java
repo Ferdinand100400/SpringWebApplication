@@ -7,11 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BusMapper {
-    public static Bus dtoToEntity(BusDto busDto){
+    public static Bus dtoToEntity(BusDto busDto) {
         if (busDto.getCities() == null) return new Bus(busDto.getId(), busDto.getNumber(), busDto.getPrice());
         return new Bus(busDto.getId(), busDto.getNumber(), busDto.getPrice(), CityMapper.ListDtoToListEntity(busDto.getCities()));
     }
-    public static BusDto entityToDto(Bus entity){
+
+    public static BusDto entityToDto(Bus entity) {
         if (entity.getCities() == null) return new BusDto(entity.getId(), entity.getNumber(), entity.getPrice());
         return new BusDto(entity.getId(), entity.getNumber(), entity.getPrice(), CityMapper.ListEntityToListDto(entity.getCities()));
     }

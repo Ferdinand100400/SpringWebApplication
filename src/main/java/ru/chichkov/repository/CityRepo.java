@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface CityRepo extends CrudRepository<City, Long>, JpaRepository<City, Long> {
     List<City> findByBusesId(Long busId);
+    List<City> findByName(String name);
 }

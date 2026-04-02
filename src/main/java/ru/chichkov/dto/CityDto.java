@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.Objects;
+
 @Getter
 @Setter
 @Data
@@ -41,5 +44,27 @@ public class CityDto {
                 ", longitude=" + longitude +
                 ", latitude=" + latitude +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CityDto cityDto = (CityDto) o;
+
+        if (!Objects.equals(id, cityDto.id)) return false;
+        if (!Objects.equals(name, cityDto.name)) return false;
+        if (!Objects.equals(longitude, cityDto.longitude)) return false;
+        return Objects.equals(latitude, cityDto.latitude);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (longitude != null ? longitude.hashCode() : 0);
+        result = 31 * result + (latitude != null ? latitude.hashCode() : 0);
+        return result;
     }
 }

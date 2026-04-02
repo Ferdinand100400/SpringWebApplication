@@ -26,7 +26,7 @@ public class BusService {
     public Long addBus(BusDto busDto) {
         if (busDto.getCities() == null)
             return saveWithTryCatch(busDto);
-        List<CityDto> cityDtoList = addCities(busDto.getCities().iterator(), new ArrayList<>());
+        List<CityDto> cityDtoList = addCities(busDto.getCities().iterator(), new ArrayList<>(), busDto);
         BusDto busDtoRes = new BusDto(busDto.getId(), busDto.getNumber(), busDto.getPrice(), cityDtoList);
         return saveWithTryCatch(busDtoRes);
     }
@@ -49,7 +49,7 @@ public class BusService {
     public Long addRoute(Long busId, List<CityDto> cityDtoList) {
         if (!busRepo.existsById(busId)) throw new BusNotFoundException(busId);
         BusDto busDto = BusMapper.entityToDto(busRepo.findById(busId).get());
-        busDto.setCities(addCities(cityDtoList.iterator(), busDto.getCities()));
+        busDto.setCities(addCities(cityDtoList.iterator(), busDto.getCities(), busDto));
         return busRepo.save(BusMapper.dtoToEntity(busDto)).getId();
     }
 
@@ -83,12 +83,12 @@ public class BusService {
         return getRouteByBusId(id);
     }
 
-    private List<CityDto> addCities(Iterator<CityDto> iterator, List<CityDto> cityDtoList) {
+    private List<CityDto> addCities(Iterator<CityDto> iterator, List<CityDto> cityDtoList, BusDto busDto) {
         while(iterator.hasNext()) {
             Long cityId = iterator.next().getId();
             if (cityId == null || !cityRepo.existsById(cityId)) throw new CityNotFoundException(cityId);
             CityDto cityDto = CityMapper.entityToDto(cityRepo.findById(cityId).get());
-            cityDtoList.add(cityDto);
+            if (!busDto.getCities().contains(cityDto)) cityDtoList.add(cityDto);
         }
         return cityDtoList;
     }

@@ -1,11 +1,15 @@
 package ru.chichkov.controller.impl;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.chichkov.dto.route.CitySelectionDto;
 import ru.chichkov.exception.*;
+
+import java.awt.*;
 
 @Hidden
 @RestControllerAdvice
@@ -59,5 +63,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handle(RemovingCityFindInRouteException exception) {
         return ResponseEntity.status(404)
                 .body("Невозможно удалить город, город есть в маршрутах автобусов с id: " + exception.getBusesId());
+    }
+
+    @ExceptionHandler(CityNotFoundByNameException.class)
+    public ResponseEntity<String> handle(CityNotFoundByNameException exception) {
+        String message = exception.getMessage().equals("START") ? "Начальный" : "Конечный";
+        return ResponseEntity.status(404)
+                .body(message + " город c названием " + exception.getName() + " не найден");
+    }
+
+    @ExceptionHandler(CityByNameSeveralException.class)
+    public ResponseEntity<?> handle(CityByNameSeveralException exception) {
+        CitySelectionDto citySelectionDto = new CitySelectionDto(exception.getCities(), "Найдено несколько городов, выберите нужный");
+        return ResponseEntity.status(HttpStatus.MULTIPLE_CHOICES)
+                .body(citySelectionDto);
+    }
+
+    @ExceptionHandler(CityStartAndCityEndEqualsException.class)
+    public ResponseEntity<String> handle(CityStartAndCityEndEqualsException exception) {
+        return ResponseEntity.status(404)
+                .body("Вы уже находитесь в городе " + exception.getCityName());
     }
 }

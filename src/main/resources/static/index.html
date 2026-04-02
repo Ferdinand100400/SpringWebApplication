@@ -98,6 +98,9 @@
         button.secondary { 
             background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
         }
+        button.info { 
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
         .message { 
             padding: 15px; 
             margin: 15px 0; 
@@ -133,6 +136,25 @@
             padding: 15px; 
             border-radius: 8px;
             border-left: 5px solid #27ae60;
+        }
+        .route-item {
+            background: #f8f9fa;
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #9b59b6;
+            transition: all 0.3s;
+        }
+        .route-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(155, 89, 182, 0.2);
+        }
+        .segment-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
         }
         .tabs { 
             display: flex; 
@@ -215,6 +237,11 @@
             overflow-y: auto;
             padding: 10px;
         }
+        .route-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -243,6 +270,44 @@
         }
         .close:hover {
             color: #000;
+        }
+        .route-stat {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+        .route-stat.price {
+            background: #27ae60;
+        }
+        .route-stat.time {
+            background: #f39c12;
+        }
+        .route-stat.transfers {
+            background: #9b59b6;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .badge.fastest {
+            background: #f1c40f;
+            color: #2c3e50;
+        }
+        .badge.cheapest {
+            background: #2ecc71;
+            color: white;
+        }
+        .badge.transfers {
+            background: #9b59b6;
+            color: white;
         }
         @media (max-width: 768px) {
             .grid-2, .grid-3 {
@@ -294,6 +359,7 @@
             <div class="tab" onclick="showTab('buses')">🚌 Автобусы</div>
             <div class="tab" onclick="showTab('cities')">🏙️ Города</div>
             <div class="tab" onclick="showTab('routes')">🗺️ Маршруты</div>
+            <div class="tab" onclick="showTab('routeFinder')">🔍 Поиск маршрутов</div>
         </div>
 
         <!-- Дашборд -->
@@ -350,12 +416,6 @@
                             <label for="price">Стоимость проезда (руб.):</label>
                             <input type="number" id="price" placeholder="Например: 50" required min="0">
                         </div>
-                   <!--     <div class="form-group">
-                            <label for="initialCities">Начальный маршрут (ID городов через запятую):</label>
-                            <input type="text" id="initialCities" placeholder="Например: 1,2,3">
-                            <small>Опционально: укажите ID городов для начального маршрута</small>
-                        </div>
-                    -->
                         <button type="submit" class="success">✅ Добавить автобус</button>
                     </form>
                 </div>
@@ -485,6 +545,72 @@
                 </div>
             </div>
         </div>
+
+        <!-- НОВАЯ ВКЛАДКА: Поиск маршрутов -->
+        <div id="routeFinder" class="tab-content">
+            <div class="card">
+                <h3>🔍 Поиск маршрутов между городами</h3>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label for="startCity">Город отправления:</label>
+                        <input type="text" id="startCity" placeholder="Например: Москва" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endCity">Город назначения:</label>
+                        <input type="text" id="endCity" placeholder="Например: Санкт-Петербург" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="typeFinder">Тип поиска:</label>
+                        <select id="typeFinder">
+                            <option value="FASTEST">Самый быстрый</option>
+                            <option value="LESS_PRICE">Самый дешёвый</option>
+                            <option value="MIN_TRANSFERS">Минимум пересадок</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="findRoutes()" class="info">🔎 Найти маршруты</button>
+                    <button onclick="clearRouteSearch()" class="secondary">🗑️ Очистить</button>
+                </div>
+            </div>
+
+            <!-- Результаты поиска -->
+            <div class="card">
+                <h3>📊 Найденные маршруты</h3>
+                <div class="search-info" id="searchInfo">
+                    <p>Введите города для поиска маршрутов</p>
+                </div>
+                <div id="routeResults" class="route-list">
+                    <!-- Здесь будут отображаться найденные маршруты -->
+                </div>
+            </div>
+
+            <!-- Информация о фильтрации -->
+            <div class="card">
+                <h3>📋 Сортировка и фильтрация</h3>
+                <div class="grid-3">
+                    <div class="form-group">
+                        <label>Сортировать по:</label>
+                        <select id="sortBy" onchange="sortRoutes()">
+                            <option value="price">Цене (возрастание)</option>
+                            <option value="price_desc">Цене (убывание)</option>
+                            <option value="time">Времени (возрастание)</option>
+                            <option value="time_desc">Времени (убывание)</option>
+                            <option value="transfers">Пересадкам (возрастание)</option>
+                            <option value="transfers_desc">Пересадкам (убывание)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Макс. пересадок:</label>
+                        <input type="number" id="maxTransfers" min="0" max="10" value="10" onchange="filterRoutes()">
+                    </div>
+                    <div class="form-group">
+                        <label>Макс. цена:</label>
+                        <input type="number" id="maxPrice" min="0" placeholder="Неограничено" onchange="filterRoutes()">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Модальное окно редактирования автобуса -->
@@ -541,6 +667,7 @@
         const API_BASE = '';
         const BUS_API = '/bus';
         const CITY_API = '/city';
+        const ROUTE_API = '/route';
         
         // Утилиты для работы с API
         class TransportAPI {
@@ -652,7 +779,6 @@
                 
                 const number = document.getElementById('number').value.trim();
                 const price = document.getElementById('price').value;
-        //        const initialCities = document.getElementById('initialCities').value;
 
                 if (!number || !price) {
                     this.showMessage('Заполните номер и стоимость автобуса');
@@ -664,18 +790,6 @@
                         number, 
                         price: parseInt(price)
                     };
-
-                    // Если указаны города для начального маршрута
-               //     if (initialCities) {
-               //         const cityIds = initialCities.split(',')
-               //             .map(id => id.trim())
-               //             .filter(id => id !== '')
-               //             .map(id => parseInt(id));
-               //         
-               //         if (cityIds.length > 0) {
-               //             busData.cities = cityIds;
-               //         }
-               //     }
 
                     const busId = await TransportAPI.post(BUS_API, busData);
                     this.showMessage(`✅ Автобус "${number}" успешно добавлен! ID: ${busId}`, 'success');
@@ -999,6 +1113,215 @@
                 }
             }
 
+            // НОВЫЙ ФУНКЦИОНАЛ: Поиск маршрутов
+            static currentRoutes = [];
+            static filteredRoutes = [];
+
+            static async findRoutes() {
+                const startCity = document.getElementById('startCity').value.trim();
+                const endCity = document.getElementById('endCity').value.trim();
+                const typeFinder = document.getElementById('typeFinder').value;
+
+                if (!startCity || !endCity) {
+                    this.showMessage('Введите города отправления и назначения');
+                    return;
+                }
+
+                if (startCity === endCity) {
+                    this.showMessage('Город отправления и назначения не могут быть одинаковыми');
+                    return;
+                }
+
+                try {
+                    const routeRequest = {
+                        startCity: startCity,
+                        endCity: endCity,
+                        typeFinder: typeFinder
+                    };
+
+                    const routes = await TransportAPI.post(ROUTE_API, routeRequest);
+                    this.currentRoutes = routes;
+                    this.filteredRoutes = [...routes];
+
+                    this.renderRouteSearchResults(routes);
+                    this.updateSearchInfo(startCity, endCity, typeFinder, routes.length);
+                    this.logActivity(`Поиск маршрута: ${startCity} → ${endCity} (${typeFinder})`);
+                } catch (error) {
+                    this.showMessage('❌ Ошибка поиска маршрутов: ' + error.message);
+                    document.getElementById('routeResults').innerHTML = '<div class="error message">Не удалось найти маршруты между указанными городами</div>';
+                }
+            }
+
+            static renderRouteSearchResults(routes) {
+                const routeResults = document.getElementById('routeResults');
+                
+                if (!routes || routes.length === 0) {
+                    routeResults.innerHTML = '<div class="info message">🚫 Маршруты не найдены</div>';
+                    return;
+                }
+
+                // Добавляем вычисление лучших маршрутов
+                const bestRoutes = this.calculateBestRoutes(routes);
+
+                routeResults.innerHTML = routes.map((route, index) => {
+                    const isFastest = bestRoutes.fastest === index;
+                    const isCheapest = bestRoutes.cheapest === index;
+                    const isMinTransfers = bestRoutes.minTransfers === index;
+                    
+                    return `
+                        <div class="route-item">
+                            <div class="action-buttons" style="justify-content: space-between; align-items: center;">
+                                <h4>Маршрут ${index + 1} 
+                                    ${isFastest ? '<span class="badge fastest">Самый быстрый</span>' : ''}
+                                    ${isCheapest ? '<span class="badge cheapest">Самый дешёвый</span>' : ''}
+                                    ${isMinTransfers ? '<span class="badge transfers">Минимум пересадок</span>' : ''}
+                                </h4>
+                                <div>
+                                    <span class="route-stat price">💰 ${route.generalPrice} руб.</span>
+                                    <span class="route-stat time">⏱️ ${route.generalTime} мин.</span>
+                                    <span class="route-stat transfers">🔄 ${route.transfersCount} пересад.</span>
+                                </div>
+                            </div>
+                            <p><strong>${route.startCityName}</strong> → <strong>${route.endCityName}</strong></p>
+                            <div class="entity-list">
+                                ${route.route.map((segment, segIndex) => `
+                                    <div class="segment-item">
+                                        <h5>${segIndex + 1}. ${segment.busDto?.number || 'Автобус'}: ${segment.fromCity?.name || 'Город'} → ${segment.toCity?.name || 'Город'}</h5>
+                                        <p><strong>Автобус:</strong> ${segment.busDto?.number || 'Неизвестно'} (ID: ${segment.busDto?.id || '?'})</p>
+                                        <p><strong>Стоимость сегмента:</strong> ${segment.price} руб.</p>
+                                        <p><strong>Время в пути:</strong> ${segment.time} мин.</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="action-buttons">
+                                <button onclick="TransportManager.copyRouteInfo(${index})">📋 Копировать инфо</button>
+                                <button onclick="TransportManager.saveRoute(${index})" class="success">💾 Сохранить</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            static calculateBestRoutes(routes) {
+                let fastest = 0;
+                let cheapest = 0;
+                let minTransfers = 0;
+                
+                routes.forEach((route, index) => {
+                    if (route.generalTime < routes[fastest].generalTime) fastest = index;
+                    if (route.generalPrice < routes[cheapest].generalPrice) cheapest = index;
+                    if (route.transfersCount < routes[minTransfers].transfersCount) minTransfers = index;
+                });
+                
+                return { fastest, cheapest, minTransfers };
+            }
+
+            static updateSearchInfo(startCity, endCity, typeFinder, count) {
+                const searchInfo = document.getElementById('searchInfo');
+                const typeText = {
+                    'FASTEST': 'самые быстрые',
+                    'LESS_PRICE': 'самые дешёвые',
+                    'MIN_TRANSFERS': 'с минимумом пересадок'
+                }[typeFinder] || 'маршруты';
+                
+                searchInfo.innerHTML = `
+                    <div class="success message">
+                        <p>🔍 Найдено ${count} маршрута(ов) из <strong>${startCity}</strong> в <strong>${endCity}</strong></p>
+                        <p>Поиск: <strong>${typeText}</strong></p>
+                    </div>
+                `;
+            }
+
+            static copyRouteInfo(index) {
+                if (!this.currentRoutes[index]) return;
+                
+                const route = this.currentRoutes[index];
+                const text = `
+Маршрут: ${route.startCityName} → ${route.endCityName}
+Общая стоимость: ${route.generalPrice} руб.
+Общее время: ${route.generalTime} мин.
+Количество пересадок: ${route.transfersCount}
+
+Детали маршрута:
+${route.route.map((segment, i) => 
+    `${i + 1}. ${segment.busDto?.number || 'Автобус'}: ${segment.fromCity?.name || 'Город'} → ${segment.toCity?.name || 'Город'} (${segment.price} руб., ${segment.time} мин.)`
+).join('\n')}
+                `.trim();
+                
+                navigator.clipboard.writeText(text)
+                    .then(() => this.showMessage('✅ Информация о маршруте скопирована в буфер обмена', 'success'))
+                    .catch(() => this.showMessage('❌ Не удалось скопировать информацию', 'error'));
+            }
+
+            static saveRoute(index) {
+                if (!this.currentRoutes[index]) return;
+                
+                const route = this.currentRoutes[index];
+                const savedRoutes = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+                savedRoutes.push({
+                    ...route,
+                    savedAt: new Date().toISOString()
+                });
+                localStorage.setItem('savedRoutes', JSON.stringify(savedRoutes));
+                
+                this.showMessage('✅ Маршрут сохранен в избранное', 'success');
+                this.logActivity(`Сохранен маршрут: ${route.startCityName} → ${route.endCityName}`);
+            }
+
+            static filterRoutes() {
+                const maxTransfers = parseInt(document.getElementById('maxTransfers').value) || 10;
+                const maxPrice = parseInt(document.getElementById('maxPrice').value);
+                
+                this.filteredRoutes = this.currentRoutes.filter(route => {
+                    const transfersOk = route.transfersCount <= maxTransfers;
+                    const priceOk = isNaN(maxPrice) || route.generalPrice <= maxPrice;
+                    return transfersOk && priceOk;
+                });
+                
+                this.renderRouteSearchResults(this.filteredRoutes);
+                this.updateSearchInfo(
+                    document.getElementById('startCity').value.trim(),
+                    document.getElementById('endCity').value.trim(),
+                    document.getElementById('typeFinder').value,
+                    this.filteredRoutes.length
+                );
+            }
+
+            static sortRoutes() {
+                const sortBy = document.getElementById('sortBy').value;
+                
+                this.filteredRoutes.sort((a, b) => {
+                    switch(sortBy) {
+                        case 'price':
+                            return a.generalPrice - b.generalPrice;
+                        case 'price_desc':
+                            return b.generalPrice - a.generalPrice;
+                        case 'time':
+                            return a.generalTime - b.generalTime;
+                        case 'time_desc':
+                            return b.generalTime - a.generalTime;
+                        case 'transfers':
+                            return a.transfersCount - b.transfersCount;
+                        case 'transfers_desc':
+                            return b.transfersCount - a.transfersCount;
+                        default:
+                            return 0;
+                    }
+                });
+                
+                this.renderRouteSearchResults(this.filteredRoutes);
+            }
+
+            static clearRouteSearch() {
+                document.getElementById('startCity').value = '';
+                document.getElementById('endCity').value = '';
+                document.getElementById('typeFinder').value = 'FASTEST';
+                document.getElementById('routeResults').innerHTML = '';
+                document.getElementById('searchInfo').innerHTML = '<p>Введите города для поиска маршрутов</p>';
+                this.currentRoutes = [];
+                this.filteredRoutes = [];
+            }
+
             // Вспомогательные методы
             static async viewBus(id) {
                 try {
@@ -1054,6 +1377,9 @@
             if (tabName === 'buses') TransportManager.loadBuses();
             if (tabName === 'cities') TransportManager.loadCities();
             if (tabName === 'dashboard') TransportManager.updateStats();
+            if (tabName === 'routeFinder') {
+                document.getElementById('searchInfo').innerHTML = '<p>Введите города для поиска маршрутов</p>';
+            }
         }
 
         function loadBuses() { TransportManager.loadBuses(); }
@@ -1107,6 +1433,12 @@
                     .catch(error => TransportManager.showMessage('❌ Ошибка: ' + error.message));
             }
         }
+
+        // Новые функции для поиска маршрутов
+        function findRoutes() { TransportManager.findRoutes(); }
+        function filterRoutes() { TransportManager.filterRoutes(); }
+        function sortRoutes() { TransportManager.sortRoutes(); }
+        function clearRouteSearch() { TransportManager.clearRouteSearch(); }
 
         function loadPopularRoutes() {
             TransportManager.showMessage('📊 Функция популярных маршрутов в разработке', 'info');
